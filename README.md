@@ -1,5 +1,12 @@
 # Personal_RAG
 
+Problem:
+1. POC to showcase our ability to create a RAG pipeline from our Notes app.
+
+Goals:
+1. Create a RAG pipeline
+
+Design:
 ```mermaid
 graph TD
     A[1. Export Notes <br/><small>Notes --> .md files</small> ] 
@@ -13,3 +20,4 @@ graph TD
     E[5. Query <br/><small> pass context to claude --> receive response </small>]
 
 ```
+
