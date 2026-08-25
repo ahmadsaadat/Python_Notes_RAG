@@ -15,7 +15,7 @@ graph TD
     --> 
     C[3. Embed Chunks <br/><small> sequences --> vectors </small>]
     -->
-    D[4. Store in GraphDB <br/><small> store vectors in lanceDB </small>]
+    D[4. Store in VectorDB <br/><small> store vectors in lanceDB </small>]
     -->
     E[5. Query <br/><small> pass context to claude --> receive response </small>]
 

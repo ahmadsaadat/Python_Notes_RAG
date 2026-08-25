@@ -183,3 +183,6 @@ cython_debug/
 # app specific
 .vscode
 python_notes_rag/notes/*
+python_notes_rag/chunks/*
+python_notes_rag/embeddings/*
+python_notes_rag/db/*
