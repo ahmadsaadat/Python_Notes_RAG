@@ -59,7 +59,7 @@ def embed():
     with utils.ollama_server():
         for path in settings.CHUNKS_DIR.iterdir():
             chunk_data = json.loads(path.read_text(encoding="utf-8"))
-            chunk_data["vector"] = ollama.embed(model="nomic-embed-text", input=chunk_data["text"])["embeddings"][0]
+            chunk_data["vector"] = ollama.embed(model=settings.EMBED_MODEL, input=chunk_data["text"])["embeddings"][0]
             out_path = settings.EMBEDDINGS_DIR / path.name
             out_path.write_text(json.dumps(chunk_data), encoding="utf-8")
 
@@ -91,12 +91,12 @@ def query(question: str, top_k: int = 5):
     table = db.open_table("notes")
 
     with utils.ollama_server():
-        question_vector = ollama.embed(model="nomic-embed-text", input=question)["embeddings"][0]
+        question_vector = ollama.embed(model=settings.EMBED_MODEL, input=question)["embeddings"][0]
         results = table.search(question_vector).limit(top_k).to_list()
         context = "\n\n---\n\n".join(r["text"] for r in results)
 
         for chunk in ollama.chat(
-            model="qwen2.5:14b",
+            model=settings.CHAT_MODEL,
             messages=[{
                 "role": "user",
                 "content": f"Answer based only on these notes:\n\n{context}\n\nQuestion: {question}"

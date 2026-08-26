@@ -4,6 +4,9 @@ import pathlib
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 
+EMBED_MODEL = "nomic-embed-text"
+CHAT_MODEL = "qwen2.5:14b"
+
 # 1. export notes
 NOTES_DIR = pathlib.Path(__file__).parent / "notes"
 NOTES_DIR.mkdir(exist_ok=True)
