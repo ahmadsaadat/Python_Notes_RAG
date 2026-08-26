@@ -1,10 +1,12 @@
 import json
+import sys
 import typer
 import macnotesapp
 import ollama
 import lancedb
 import shutil
 import pandas
+from typer.main import get_command
 from python_notes_rag import utils
 from python_notes_rag import settings
 
@@ -114,6 +116,92 @@ def inspect(n: int = 10):
     print(table.to_pandas().head(n))
 
 
+def is_trained() -> bool:
+    try:
+        db = lancedb.connect(str(settings.DB_DIR))
+        return db.open_table("notes").count_rows() > 0
+    except Exception:
+        return False
+
+
+def train():
+    """Run the full RAG pipeline: export notes, chunk, embed, and store them."""
+    print("Training on your notes (export -> chunk -> embed -> store)...")
+    cli = get_command(app)
+    for step in ("notes", "chunk", "embed", "db"):
+        cli.main(args=[step], standalone_mode=False)
+    print("Training complete.\n")
+
+
+def ask(question: str, top_k: int = 5):
+    """Answer a question using the existing RAG index. Assumes an Ollama server is already running."""
+    db = lancedb.connect(str(settings.DB_DIR))
+    table = db.open_table("notes")
+
+    question_vector = ollama.embed(model=settings.EMBED_MODEL, input=question)["embeddings"][0]
+    results = table.search(question_vector).limit(top_k).to_list()
+    context = "\n\n---\n\n".join(r["text"] for r in results)
+
+    for chunk in ollama.chat(
+        model=settings.CHAT_MODEL,
+        messages=[{
+            "role": "user",
+            "content": f"Answer based only on these notes:\n\n{context}\n\nQuestion: {question}"
+        }],
+        stream=True
+    ):
+        print(chunk["message"]["content"], end="", flush=True)
+    print()
+
+
+SLASH_COMMANDS = {
+    "/retrain": "Re-run the RAG pipeline (export, chunk, embed, store) from scratch.",
+    "/help": "Show this help.",
+    "/exit": "Leave the chat.",
+}
+
+
+def chat():
+    """Chatbot REPL: ask questions about your notes. /retrain, /help, /exit are recognized as commands."""
+
+    if not is_trained():
+        train()
+
+    print("Ask a question about your notes. Commands: /retrain, /help, /exit\n")
+
+    with utils.ollama_server():
+        while True:
+            try:
+                line = input("you> ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                break
+
+            if not line:
+                continue
+
+            if line in ("/exit", "/quit"):
+                break
+
+            if line == "/help":
+                for command, description in SLASH_COMMANDS.items():
+                    print(f"  {command:<10} {description}")
+                continue
+
+            try:
+                if line == "/retrain":
+                    train()
+                    continue
+
+                print("bot> ", end="", flush=True)
+                ask(line)
+            except Exception as e:
+                print(f"Error: {e}")
+
+
 if __name__ == "__main__":
     utils.system_check()
-    app()
+    if len(sys.argv) > 1:
+        app()
+    else:
+        chat()

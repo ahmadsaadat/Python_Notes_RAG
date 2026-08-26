@@ -28,3 +28,7 @@ Prerequisites:
    - Pull the required models: `ollama pull nomic-embed-text` and `ollama pull qwen2.5:14b`
 5. Grant Notes automation access: System Settings → Privacy & Security → Automation → allow your terminal/IDE to control Notes
 
+Notes_RAG in Action:
+
+
+![alt text](readme_assets/image.png)
